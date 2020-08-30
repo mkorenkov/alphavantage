@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -12,21 +13,16 @@ import (
 	"github.com/pkg/errors"
 )
 
+const aplhavantageURL = "https://www.alphavantage.co"
+
 // HTTPClient allows to plug a custom http.Client as long as it can Do(http.Request)
 type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-// func urlJoin(baseURL string, pathParts ...string) (string, error) {
-// 	u, err := url.Parse(baseURL)
-// 	if err != nil {
-// 		return "", errors.Wrap(err, "Unable to parse base URL")
-// 	}
-// 	for _, urlPath := range pathParts {
-// 		u.Path = path.Join(u.Path, urlPath)
-// 	}
-// 	return u.String(), nil
-// }
+func buildURL(apiKey string, function string, symbol string) string {
+	return fmt.Sprintf("%s/query?function=%s&symbol=%s&apikey=%s", aplhavantageURL, function, symbol, apiKey)
+}
 
 func panicParseInt64ish(v string) int64 {
 	if v == "None" {

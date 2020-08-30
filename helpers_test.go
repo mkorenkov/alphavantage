@@ -59,3 +59,17 @@ func TestDateParsePanic(t *testing.T) {
 		assert.Panics(t, func() { panicParseDate(input) })
 	}
 }
+
+func TestBuildURL(t *testing.T) {
+	testCases := map[string][]string{
+		"https://www.alphavantage.co/query?function=OVERVIEW&symbol=IBM&apikey=demo":         {"demo", "OVERVIEW", "IBM"},
+		"https://www.alphavantage.co/query?function=BALANCE_SHEET&symbol=IBM&apikey=demo":    {"demo", "BALANCE_SHEET", "IBM"},
+		"https://www.alphavantage.co/query?function=INCOME_STATEMENT&symbol=IBM&apikey=demo": {"demo", "INCOME_STATEMENT", "IBM"},
+		"https://www.alphavantage.co/query?function=CASH_FLOW&symbol=IBM&apikey=demo":        {"demo", "CASH_FLOW", "IBM"},
+	}
+
+	for expectedResult, input := range testCases {
+		actualResult := buildURL(input[0], input[1], input[2])
+		assert.Equal(t, actualResult, expectedResult)
+	}
+}

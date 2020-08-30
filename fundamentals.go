@@ -1,11 +1,99 @@
 package alphavantage
 
 import (
+	"context"
+
 	"github.com/mkorenkov/alphavantage/formtype"
+	"github.com/pkg/errors"
 )
 
-// CompanyProfile parsed version of CompanyProfile data received from alphavantage
-type CompanyProfile struct {
+// CompanyProfile makes API request and returns parsed response
+func CompanyProfile(ctx context.Context, httpClient HTTPClient, apiKey string, symbol string) (CompanyProfileInfo, error) {
+	url := buildURL(apiKey, "OVERVIEW", symbol)
+	res := CompanyProfileInfo{}
+	if err := makeRequest(ctx, httpClient, url, &res); err != nil {
+		return res, errors.Wrap(err, "CompanyProfile error")
+	}
+	return res, nil
+}
+
+// BalanceSheets makes API request and returns parsed response
+func BalanceSheets(ctx context.Context, httpClient HTTPClient, apiKey string, symbol string) ([]BalanceSheetStatement, error) {
+	url := buildURL(apiKey, "BALANCE_SHEET", symbol)
+	response := rawBalanceSheetResponse{}
+	if err := makeRequest(ctx, httpClient, url, &response); err != nil {
+		return nil, errors.Wrap(err, "BalanceSheets error")
+	}
+	res := make([]BalanceSheetStatement, 0, len(response.AnnualReports)+len(response.QuarterlyReports))
+	for _, raw := range response.AnnualReports {
+		b, err := fromBalanceSheet(raw, formtype.Form10K)
+		if err != nil {
+			return nil, errors.Wrap(err, "BalanceSheets parsing error")
+		}
+		res = append(res, b)
+	}
+	for _, raw := range response.QuarterlyReports {
+		b, err := fromBalanceSheet(raw, formtype.Form10Q)
+		if err != nil {
+			return nil, errors.Wrap(err, "BalanceSheets parsing error")
+		}
+		res = append(res, b)
+	}
+	return res, nil
+}
+
+// CashFlows makes API request and returns parsed response
+func CashFlows(ctx context.Context, httpClient HTTPClient, apiKey string, symbol string) ([]CashFlowStatement, error) {
+	url := buildURL(apiKey, "CASH_FLOW", symbol)
+	response := rawCashFlowResponse{}
+	if err := makeRequest(ctx, httpClient, url, &response); err != nil {
+		return nil, errors.Wrap(err, "CashFlows error")
+	}
+	res := make([]CashFlowStatement, 0, len(response.AnnualReports)+len(response.QuarterlyReports))
+	for _, raw := range response.AnnualReports {
+		b, err := fromCashFlow(raw, formtype.Form10K)
+		if err != nil {
+			return nil, errors.Wrap(err, "CashFlows parsing error")
+		}
+		res = append(res, b)
+	}
+	for _, raw := range response.QuarterlyReports {
+		b, err := fromCashFlow(raw, formtype.Form10Q)
+		if err != nil {
+			return nil, errors.Wrap(err, "CashFlows parsing error")
+		}
+		res = append(res, b)
+	}
+	return res, nil
+}
+
+// IncomeStatements makes API request and returns parsed response
+func IncomeStatements(ctx context.Context, httpClient HTTPClient, apiKey string, symbol string) ([]IncomeStatement, error) {
+	url := buildURL(apiKey, "INCOME_STATEMENT", symbol)
+	response := rawIncomeStatementResponse{}
+	if err := makeRequest(ctx, httpClient, url, &response); err != nil {
+		return nil, errors.Wrap(err, "IncomeStatements error")
+	}
+	res := make([]IncomeStatement, 0, len(response.AnnualReports)+len(response.QuarterlyReports))
+	for _, raw := range response.AnnualReports {
+		b, err := fromIncomeStatement(raw, formtype.Form10K)
+		if err != nil {
+			return nil, errors.Wrap(err, "IncomeStatements parsing error")
+		}
+		res = append(res, b)
+	}
+	for _, raw := range response.QuarterlyReports {
+		b, err := fromIncomeStatement(raw, formtype.Form10Q)
+		if err != nil {
+			return nil, errors.Wrap(err, "IncomeStatements parsing error")
+		}
+		res = append(res, b)
+	}
+	return res, nil
+}
+
+// CompanyProfileInfo parsed version of CompanyProfileInfo data received from alphavantage
+type CompanyProfileInfo struct {
 	Symbol                     string `json:"Symbol"`
 	AssetType                  string `json:"AssetType"`
 	Name                       string `json:"Name"`

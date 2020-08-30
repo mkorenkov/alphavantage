@@ -15,9 +15,11 @@ import (
 type fakeHTTPClient struct {
 	StatusCode int
 	Result     []byte
+	Request    *http.Request
 }
 
-func (c fakeHTTPClient) Do(req *http.Request) (*http.Response, error) {
+func (c *fakeHTTPClient) Do(req *http.Request) (*http.Response, error) {
+	c.Request = req
 	var buf bytes.Buffer
 	_, err := buf.Write(c.Result)
 	if err != nil {
@@ -93,7 +95,7 @@ type testCompanyProfileAPIResponse struct {
 
 func TestAlpacaAPICompanyProfile(t *testing.T) {
 	url := "https://www.alphavantage.co/query?function=OVERVIEW&symbol=IBM&apikey=demo"
-	httpClient := fakeHTTPClient{
+	httpClient := &fakeHTTPClient{
 		StatusCode: http.StatusOK,
 		Result: []byte(`
 			{
